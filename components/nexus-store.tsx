@@ -40,12 +40,13 @@ const uploadProductImage=async(file:File)=>{
  bitmap.close()
  const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(result=>result?resolve(result):reject(new Error('Your browser could not compress this image.')),'image/webp',0.72))
  if(blob.size>350*1024)throw new Error(`${file.name} is still too large after optimization. Try a smaller image.`)
- return await new Promise<string>((resolve,reject)=>{
-  const reader=new FileReader()
-  reader.onload=()=>typeof reader.result==='string'?resolve(reader.result):reject(new Error('The optimized image could not be saved.'))
-  reader.onerror=()=>reject(new Error('The optimized image could not be saved.'))
-  reader.readAsDataURL(blob)
- })
+ const formData=new FormData()
+ const optimizedFile=new File([blob],`${file.name.replace(/\.[^.]+$/,'')||'product'}.webp`,{type:'image/webp'})
+ formData.append('file',optimizedFile)
+ const response=await fetch('/api/admin/product-images',{method:'POST',body:formData})
+ const result=await response.json().catch(()=>null)
+ if(!response.ok||typeof result?.image!=='string')throw new Error(result?.error||'The image could not be saved to Supabase Storage.')
+ return result.image
 }
 
 export default function NexusStore(){
