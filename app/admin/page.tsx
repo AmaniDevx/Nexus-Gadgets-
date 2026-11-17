@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { hasAdminAccess } from '@/lib/admin-access'
 
 export default function AdminLoginPage() {
@@ -16,6 +16,10 @@ export default function AdminLoginPage() {
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
+    if (!isSupabaseConfigured) {
+      setError('Admin sign-in is unavailable because Supabase is not configured for this deployment.')
+      return
+    }
     setPending(true)
 
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
@@ -48,11 +52,12 @@ export default function AdminLoginPage() {
       <p className="mt-8 text-sm font-medium text-[#0071E3]">Staff sign-in</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-[-.04em]">Admin access</h1>
       <p className="mt-2 text-sm leading-6 text-[#6E6E73]">Sign in with your authorized staff account to manage the store.</p>
+      {!isSupabaseConfigured&&<p role="status" className="mt-5 rounded-xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">Admin sign-in is unavailable because Supabase is not configured for this deployment.</p>}
       <form onSubmit={signIn} className="mt-7 flex flex-col gap-4">
-        <label className="flex flex-col gap-2 text-sm font-medium">Email<input type="email" autoComplete="username" required value={email} onChange={event => setEmail(event.target.value)} className="rounded-xl bg-[#F5F5F7] px-4 py-3 font-normal outline-none focus:ring-2 focus:ring-[#0071E3]"/></label>
-        <label className="flex flex-col gap-2 text-sm font-medium">Password<input type="password" autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} className="rounded-xl bg-[#F5F5F7] px-4 py-3 font-normal outline-none focus:ring-2 focus:ring-[#0071E3]"/></label>
+        <label className="flex flex-col gap-2 text-sm font-medium">Email<input type="email" autoComplete="username" required disabled={!isSupabaseConfigured} value={email} onChange={event => setEmail(event.target.value)} className="rounded-xl bg-[#F5F5F7] px-4 py-3 font-normal outline-none focus:ring-2 focus:ring-[#0071E3]"/></label>
+        <label className="flex flex-col gap-2 text-sm font-medium">Password<input type="password" autoComplete="current-password" required disabled={!isSupabaseConfigured} value={password} onChange={event => setPassword(event.target.value)} className="rounded-xl bg-[#F5F5F7] px-4 py-3 font-normal outline-none focus:ring-2 focus:ring-[#0071E3]"/></label>
         {error&&<p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
-        <button disabled={pending} className="mt-1 rounded-full bg-[#1D1D1F] px-5 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-wait disabled:opacity-60">{pending?'Signing in…':'Sign in'}</button>
+        <button disabled={pending||!isSupabaseConfigured} className="mt-1 rounded-full bg-[#1D1D1F] px-5 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60">{pending?'Signing in…':isSupabaseConfigured?'Sign in':'Sign-in unavailable'}</button>
       </form>
       <Link href="/" className="mt-6 inline-block text-sm text-[#86868B] hover:text-[#1D1D1F]">Return to storefront</Link>
     </section>
