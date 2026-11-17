@@ -61,6 +61,12 @@ function drawImageContain(context: CanvasRenderingContext2D, image: HTMLImageEle
   context.drawImage(image, x + (width - drawnWidth) / 2, y + (height - drawnHeight) / 2, drawnWidth, drawnHeight)
 }
 
+function getAdSpecs(product: AdProduct) {
+  const find = (pattern: RegExp) => Object.entries(product.specs || {}).find(([label]) => pattern.test(label))
+  return [find(/processor|cpu|chip/i), find(/ram|memory/i), find(/storage|ssd/i), find(/display|feature|touch|convertib|keyboard/i), find(/graphics|best suited|use case/i)]
+    .filter((entry): entry is [string, string] => Boolean(entry))
+}
+
 function createAdCanvas(context: CanvasRenderingContext2D, product: AdProduct, image: HTMLImageElement) {
   const canvas = context.canvas
   canvas.width = 1080
@@ -79,53 +85,67 @@ function createAdCanvas(context: CanvasRenderingContext2D, product: AdProduct, i
 
   context.fillStyle = '#e8e7e3'
   context.beginPath()
-  context.roundRect(36, 100, 1008, 1040, 32)
+  context.roundRect(36, 100, 1008, 1110, 32)
   context.fill()
-  drawImageContain(context, image, 60, 118, 960, 1004)
+  drawImageContain(context, image, 60, 118, 960, 1074)
+
+  context.fillStyle = '#1d1d1f'
+  context.beginPath()
+  context.roundRect(640, 182, 376, 150, 24)
+  context.fill()
+  context.fillStyle = '#a9d9bd'
+  context.font = '700 17px Arial, sans-serif'
+  context.fillText('AVAILABLE NOW', 670, 221)
+  context.fillStyle = '#ffffff'
+  context.font = '700 40px Arial, sans-serif'
+  drawWrappedText(context, `KES ${product.price.toLocaleString('en-KE')}`, 670, 276, 316, 46, 1)
 
   context.fillStyle = '#0071e3'
   context.font = '700 18px Arial, sans-serif'
-  context.fillText(`${product.category.toUpperCase()}  ·  ${product.condition.toUpperCase()}`, 64, 1200)
+  context.fillText(`${product.category.toUpperCase()}  ·  ${product.condition.toUpperCase()}`, 64, 1248)
 
   context.fillStyle = '#1d1d1f'
   context.font = '700 56px Arial, sans-serif'
-  const nameBottom = drawWrappedText(context, product.name, 64, 1272, 952, 64, 2)
+  const nameBottom = drawWrappedText(context, product.name, 64, 1312, 952, 64, 2)
 
   context.fillStyle = '#6e6e73'
   context.font = '400 24px Arial, sans-serif'
   drawWrappedText(context, product.summary, 64, nameBottom + 8, 952, 32, 1)
 
-  const specs = Object.entries(product.specs).slice(0, 4)
-  const specTop = 1480
+  const findSpec = (patterns: RegExp[]) => Object.entries(product.specs || {}).find(([label]) => patterns.some(pattern => pattern.test(label)))
+  const processor = findSpec([/processor|cpu|chip/i])
+  const ram = findSpec([/ram|memory/i])
+  const storage = findSpec([/storage|ssd/i])
+  const features = findSpec([/display|feature|touch|convertib|keyboard/i])
+  const specs = [processor, ram, storage, features, findSpec([/graphics/i]), findSpec([/best suited|use case|recommended use/i])].filter((entry): entry is [string, string] => Boolean(entry))
+  const specTop = 1485
   specs.forEach(([label, value], index) => {
     const column = index % 2
     const row = Math.floor(index / 2)
     const x = column === 0 ? 64 : 548
-    const y = specTop + row * 92
+    const y = specTop + row * 78
     context.fillStyle = '#86868b'
-    context.font = '700 16px Arial, sans-serif'
+    context.font = '700 15px Arial, sans-serif'
     context.fillText(label.toUpperCase(), x, y)
     context.fillStyle = '#1d1d1f'
-    context.font = '500 23px Arial, sans-serif'
-    drawWrappedText(context, value, x, y + 32, 440, 27, 1)
+    context.font = '500 22px Arial, sans-serif'
+    drawWrappedText(context, value, x, y + 29, 440, 25, 1)
   })
 
   context.fillStyle = '#1d1d1f'
   context.beginPath()
-  context.roundRect(36, 1700, 1008, 174, 28)
+  context.roundRect(36, 1740, 1008, 134, 28)
   context.fill()
-  context.fillStyle = '#ffffff'
-  context.font = '700 20px Arial, sans-serif'
-  context.fillText('AVAILABLE NOW', 68, 1746)
-  context.font = '700 50px Arial, sans-serif'
-  context.fillText(`KES ${product.price.toLocaleString('en-KE')}`, 68, 1820)
-  context.textAlign = 'right'
   context.fillStyle = '#a9d9bd'
-  context.font = '700 18px Arial, sans-serif'
-  context.fillText('ORDER ON WHATSAPP', 1012, 1746)
+  context.font = '700 20px Arial, sans-serif'
+  context.fillText('ORDER ON WHATSAPP', 68, 1792)
   context.fillStyle = '#ffffff'
   context.font = '500 25px Arial, sans-serif'
-  context.fillText(WHATSAPP_BUSINESS_DISPLAY, 1012, 1792)
+  context.fillText(WHATSAPP_BUSINESS_DISPLAY, 68, 1836)
+  context.textAlign = 'right'
+  context.fillStyle = '#ffffff'
+  context.font = '500 18px Arial, sans-serif'
+  context.fillText('NEXUS GADGETS · KENYA', 1012, 1814)
   context.textAlign = 'left'
 }
 
@@ -218,15 +238,15 @@ export function ProductAdCreator({ products }: ProductAdCreatorProps) {
             <p className="mb-2 text-xs font-medium uppercase tracking-[.12em] text-[#86868B]">Live preview</p>
             <article className="flex aspect-[9/16] flex-col overflow-hidden rounded-[26px] bg-[#f4f3ef] shadow-[0_12px_36px_rgba(0,0,0,0.12)]">
               <div className="flex shrink-0 items-center justify-between px-4 pt-4 text-[10px] font-bold tracking-[.1em]"><span>NEXUS GADGETS</span><span className="text-[#6E6E73]">THOUGHTFUL TECH · KENYA</span></div>
-              <div className="m-3 grid min-h-0 flex-[1.4] place-items-center overflow-hidden rounded-2xl bg-[#e8e7e3] p-3"><img src={selectedProduct.image} alt={`${selectedProduct.name} ad preview`} className="max-h-full max-w-full object-contain"/></div>
+              <div className="relative m-3 grid min-h-0 flex-[1.4] place-items-center overflow-hidden rounded-2xl bg-[#e8e7e3] p-3"><img src={selectedProduct.image} alt={`${selectedProduct.name} ad preview`} className="max-h-full max-w-full object-contain"/><div className="absolute right-3 top-3 rounded-2xl bg-[#1D1D1F] px-4 py-3 text-right text-white shadow-lg"><p className="text-[9px] font-bold tracking-wide text-[#a9d9bd]">AVAILABLE NOW</p><p className="mt-1 text-lg font-bold tabular-nums">KES {selectedProduct.price.toLocaleString('en-KE')}</p></div></div>
               <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
                 <p className="text-[10px] font-bold tracking-[.08em] text-[#0071E3]">{selectedProduct.category.toUpperCase()} · {selectedProduct.condition.toUpperCase()}</p>
                 <h3 className="mt-2 line-clamp-2 text-xl font-bold leading-tight">{selectedProduct.name}</h3>
                 <p className="mt-1 line-clamp-1 text-xs text-[#6E6E73]">{selectedProduct.summary}</p>
                 <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
-                  {Object.entries(selectedProduct.specs).slice(0, 4).map(([label, value]) => <div key={label} className="min-w-0"><p className="truncate text-[9px] font-bold tracking-wide text-[#86868B]">{label.toUpperCase()}</p><p className="truncate text-[11px] font-medium">{value}</p></div>)}
+                  {getAdSpecs(selectedProduct).map(([label, value]) => <div key={label} className="min-w-0"><p className="truncate text-[9px] font-bold tracking-wide text-[#86868B]">{label.toUpperCase()}</p><p className="truncate text-[11px] font-medium">{value}</p></div>)}
                 </div>
-                <div className="mt-4 flex items-center justify-between rounded-xl bg-[#1D1D1F] px-4 py-3 text-white"><div><p className="text-[9px] font-bold tracking-wide">AVAILABLE NOW</p><p className="mt-0.5 text-lg font-bold tabular-nums">KES {selectedProduct.price.toLocaleString('en-KE')}</p></div><div className="text-right"><p className="text-[9px] font-bold tracking-wide text-[#a9d9bd]">ORDER ON WHATSAPP</p><p className="mt-1 text-[11px]">{WHATSAPP_BUSINESS_DISPLAY}</p></div></div>
+                <div className="mt-4 flex items-center justify-between rounded-xl bg-[#1D1D1F] px-4 py-3 text-white"><div><p className="text-[9px] font-bold tracking-wide text-[#a9d9bd]">ORDER ON WHATSAPP</p><p className="mt-1 text-sm font-semibold">{WHATSAPP_BUSINESS_DISPLAY}</p></div><p className="text-[10px] text-white/75">Message us to reserve</p></div>
               </div>
             </article>
           </div>
