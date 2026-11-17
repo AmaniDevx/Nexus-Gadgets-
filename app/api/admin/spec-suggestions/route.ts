@@ -1,4 +1,3 @@
-import { generateText, gateway, Output } from 'ai'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -30,16 +29,49 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Enter a specific model name to generate suggestions.' }, { status: 400 })
   }
 
+  const prompt = `Suggest technical specifications for the exact computer or device model: "${modelName}". Do not invent exact configurations. If RAM, storage, display, ports, or battery vary by SKU or cannot be confidently verified from your knowledge, clearly say "Confirm exact configuration" in that field. Distinguish the processor generation from the processor model. For a non-computer device, adapt relevant technical fields and mark irrelevant fields "Not applicable". Return concise, admin-editable strings. Best-suited-for should contain 3 to 5 short use-case recommendations. These are unverified catalog suggestions and must not be presented as verified facts. Return a JSON object matching this schema: ${JSON.stringify({ processor: 'string', ram: 'string', storage: 'string', displayAndFeatures: 'string', graphics: 'string', ports: 'string', battery: 'string', bestSuitedFor: ['3 to 5 short strings'], summary: 'string' })}`
+
   try {
-    const { output } = await generateText({
-      model: gateway('anthropic/claude-sonnet-5.5'),
-      output: Output.object({ schema: specSchema }),
-      prompt: `Suggest technical specifications for the exact computer or device model: "${modelName}". Do not invent exact configurations. If RAM, storage, display, ports, or battery vary by SKU or cannot be confidently verified from your knowledge, clearly say "Confirm exact configuration" in that field. Distinguish the processor generation from the processor model. For a non-computer device, adapt relevant technical fields and mark irrelevant fields "Not applicable". Return concise, admin-editable strings. Best-suited-for should contain 3 to 5 short use-case recommendations. These are unverified catalog suggestions and must not be presented as verified facts.`,
+    const response = await fetch('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai',
+        messages: [
+          { role: 'system', content: 'You generate cautious product specification suggestions. Return only valid JSON and never claim unverified details are certain.' },
+          { role: 'user', content: prompt },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+      }),
+      signal: AbortSignal.timeout(40_000),
+      cache: 'no-store',
     })
 
-    if (!output) return NextResponse.json({ error: 'No specification suggestions were returned. Please try again.' }, { status: 502 })
-    return NextResponse.json({ specs: output })
-  } catch {
-    return NextResponse.json({ error: 'Specification generation is temporarily unavailable. Please try again or enter the details manually.' }, { status: 502 })
+    if (response.status === 402 || response.status === 429) {
+      const retryAfter = response.headers.get('retry-after')
+      return NextResponse.json({
+        error: retryAfter
+          ? `The free AI service is rate-limited. Please wait ${retryAfter} seconds before trying again.`
+          : 'The free AI service is temporarily rate-limited. Please wait before trying again.',
+      }, { status: 503 })
+    }
+    if (!response.ok) {
+      console.error('[admin/spec-suggestions] Free AI service returned status:', response.status)
+      return NextResponse.json({ error: 'The free AI service is temporarily unavailable. Please try again shortly.' }, { status: 502 })
+    }
+
+    const result: unknown = await response.json()
+    const content = z.object({
+      choices: z.array(z.object({ message: z.object({ content: z.string() }) })).min(1),
+    }).parse(result).choices[0].message.content
+    const specs = specSchema.parse(JSON.parse(content))
+    return NextResponse.json({ specs })
+  } catch (error) {
+    console.error('[admin/spec-suggestions] Free AI generation failed:', error)
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      return NextResponse.json({ error: 'The free AI service took too long to respond. Please try again.' }, { status: 504 })
+    }
+    return NextResponse.json({ error: 'The free AI service could not return valid specification suggestions. Please try again or enter the details manually.' }, { status: 502 })
   }
 }
