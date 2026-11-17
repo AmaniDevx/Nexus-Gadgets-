@@ -3,8 +3,8 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Nexus Gadgets | Thoughtful Tech, Made Simple',
-  description: 'Shop carefully selected laptops, smartphones, and electronics in Kenya. Quality tech, straightforward KES prices, and easy WhatsApp ordering.',
+  title: 'Nexus Gadgets | Quality Tech in Kenya',
+  description: 'Shop laptops, smartphones, and electronics in Kenya. Browse verified product specifications, call our team, or order and get support through WhatsApp Business.',
   generator: 'v0.app',
   icons: {
     icon: [
