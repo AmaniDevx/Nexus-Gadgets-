@@ -41,6 +41,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ specs: output })
   } catch (error) {
     console.error('[admin/spec-suggestions] Generation failed:', error)
+    const message = error instanceof Error ? error.message : ''
+    if (/customer_verification_required|valid credit card on file/i.test(message)) {
+      return NextResponse.json({ error: 'AI suggestions are locked until a valid payment method is added to the Vercel AI Gateway account. Add one in the Vercel AI Gateway settings, then try again.' }, { status: 503 })
+    }
     return NextResponse.json({ error: 'Specification generation is temporarily unavailable. Please try again or enter the details manually.' }, { status: 502 })
   }
 }
