@@ -46,6 +46,8 @@ export default function AnalyticsPage() {
     if (!error) setOrders(current => current.map(order => order.id === id ? { ...order, status } : order))
   }
 
+  if (!authorized) return <main className="grid min-h-screen place-items-center bg-[#F5F5F7] px-5 text-sm text-[#626267]">Checking admin access…</main>
+
   return <main className="min-h-screen bg-[#F5F5F7] px-5 py-8 text-[#1D1D1F] md:px-8">
     <div className="mx-auto max-w-[1100px]">
       <a href="/" className="text-sm text-[#0071E3]">← Storefront</a>

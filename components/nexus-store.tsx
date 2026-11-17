@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpRight, CheckCircle2, ChevronDown, Lock, Menu, Plus, Search, ShoppingBag, SlidersHorizontal, Trash2, X, Copy, UploadCloud } from 'lucide-react'
+import { ArrowUpRight, CheckCircle2, ChevronDown, Lock, Plus, Search, ShoppingBag, SlidersHorizontal, Trash2, X, Copy, UploadCloud } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { hasAdminAccess } from '@/lib/admin-access'
 
@@ -26,7 +26,7 @@ const kes=(n:number)=>`KES ${n.toLocaleString('en-KE')}`
 const wa=(text:string)=>`https://wa.me/254700000000?text=${encodeURIComponent(text)}`
 
 export default function NexusStore(){
- const [products,setProducts]=useState(initialProducts),[category,setCategory]=useState('All'),[categories,setCategories]=useState<StoreCategory[]>(defaultCategories),[activeCategory,setActiveCategory]=useState(''),[selectedBrand,setSelectedBrand]=useState('All'),[newCategory,setNewCategory]=useState(''),[newBrands,setNewBrands]=useState(''),[condition,setCondition]=useState('All'),[query,setQuery]=useState(''),[sort,setSort]=useState('featured'),[bag,setBag]=useState<Record<string,number>>({}),[selected,setSelected]=useState<Product|null>(null),[bagOpen,setBagOpen]=useState(false),[name,setName]=useState(''),[delivery,setDelivery]=useState(''),[admin,setAdmin]=useState(false),[adminOpen,setAdminOpen]=useState(false),[priceEdit,setPriceEdit]=useState(''),[adminTab,setAdminTab]=useState<'inventory'|'analytics'>('inventory'),[imageFiles,setImageFiles]=useState<File[]>([]),[imageUrls,setImageUrls]=useState<string[]>([]),[orders,setOrders]=useState<any[]>([]),[views,setViews]=useState<any[]>([]),[uploading,setUploading]=useState(false),[formSeed,setFormSeed]=useState<Product|null>(null)
+ const [products,setProducts]=useState(initialProducts),[category,setCategory]=useState('All'),[categories,setCategories]=useState<StoreCategory[]>(defaultCategories),[activeCategory,setActiveCategory]=useState(''),[selectedBrand,setSelectedBrand]=useState('All'),[condition,setCondition]=useState('All'),[query,setQuery]=useState(''),[sort,setSort]=useState('featured'),[bag,setBag]=useState<Record<string,number>>({}),[selected,setSelected]=useState<Product|null>(null),[bagOpen,setBagOpen]=useState(false),[name,setName]=useState(''),[delivery,setDelivery]=useState(''),[admin,setAdmin]=useState(false),[adminOpen,setAdminOpen]=useState(false),[priceEdit,setPriceEdit]=useState(''),[adminTab,setAdminTab]=useState<'inventory'|'analytics'>('inventory'),[imageFiles,setImageFiles]=useState<File[]>([]),[imageUrls,setImageUrls]=useState<string[]>([]),[orders,setOrders]=useState<any[]>([]),[views,setViews]=useState<any[]>([]),[uploading,setUploading]=useState(false),[formSeed,setFormSeed]=useState<Product|null>(null)
  useEffect(()=>{let active=true;try{const saved=localStorage.getItem('nexus-products');if(saved)setProducts(JSON.parse(saved));const savedCategories=localStorage.getItem('nexus-categories');if(savedCategories)setCategories(JSON.parse(savedCategories))}catch{}if(new URLSearchParams(window.location.search).get('admin')==='1'){supabase.auth.getUser().then(({data})=>{if(!active)return;if(hasAdminAccess(data.user)){setAdmin(true);setAdminOpen(true)}else window.location.replace('/admin')})}return()=>{active=false}}
  ,[])
  const saveCategories=(next:StoreCategory[])=>{setCategories(next);localStorage.setItem('nexus-categories',JSON.stringify(next))}
