@@ -51,7 +51,7 @@ export default function AnalyticsPage() {
     <div className="mx-auto max-w-[1100px]">
       <div className="flex items-center justify-between gap-4">
         <a href="/" className="text-sm text-[#0071E3]">← Storefront</a>
-        <button onClick={() => { void supabase.auth.signOut().finally(() => window.location.replace('/admin')) }} className="rounded-full bg-white px-4 py-2 text-sm font-medium text-[#1D1D1F] shadow-sm">Sign out</button>
+        <button onClick={() => { void fetch('/api/admin/session', { method: 'DELETE' }).catch(() => undefined).finally(() => window.location.replace('/admin')) }} className="rounded-full bg-white px-4 py-2 text-sm font-medium text-[#1D1D1F] shadow-sm">Sign out</button>
       </div>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">Analytics &amp; Orders</h1>
       {message && <p role="status" className="mt-4 rounded-xl bg-white p-4 text-sm text-[#626267]">{message}</p>}
