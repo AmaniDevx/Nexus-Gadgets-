@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { hasAdminAccess } from '@/lib/admin-access'
 
 const statuses = ['Pending WhatsApp', 'Confirmed', 'Dispatched', 'Delivered', 'Cancelled']
 
@@ -9,13 +10,22 @@ export default function AnalyticsPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [views, setViews] = useState<any[]>([])
   const [message, setMessage] = useState('')
+  const [authorized, setAuthorized] = useState(false)
 
   useEffect(() => {
     let active = true
-    Promise.all([
-      supabase.from('orders').select('id, order_number, items, total_kes, customer_name, location, status, created_at').order('created_at', { ascending: false }),
-      supabase.from('product_views').select('product_id, product_name'),
-    ]).then(([orderResult, viewResult]) => {
+    async function loadAdminData() {
+      const { data: authData } = await supabase.auth.getUser()
+      if (!active) return
+      if (!hasAdminAccess(authData.user)) {
+        window.location.replace('/admin')
+        return
+      }
+      setAuthorized(true)
+      const [orderResult, viewResult] = await Promise.all([
+        supabase.from('orders').select('id, order_number, items, total_kes, customer_name, location, status, created_at').order('created_at', { ascending: false }),
+        supabase.from('product_views').select('product_id, product_name'),
+      ])
       if (!active) return
       if (orderResult.error || viewResult.error) setMessage('Analytics tables are not available yet. Existing storefront features remain usable.')
       setOrders(orderResult.data || [])
@@ -26,7 +36,8 @@ export default function AnalyticsPage() {
         counts.set(view.product_id, item)
       }
       setViews([...counts.entries()].map(([id, item]) => ({ id, ...item })).sort((a, b) => b.count - a.count))
-    })
+    }
+    void loadAdminData()
     return () => { active = false }
   }, [])
 
