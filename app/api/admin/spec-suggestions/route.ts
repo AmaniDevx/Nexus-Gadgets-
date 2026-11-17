@@ -39,7 +39,8 @@ export async function POST(request: Request) {
 
     if (!output) return NextResponse.json({ error: 'No specification suggestions were returned. Please try again.' }, { status: 502 })
     return NextResponse.json({ specs: output })
-  } catch {
+  } catch (error) {
+    console.error('[admin/spec-suggestions] Generation failed:', error)
     return NextResponse.json({ error: 'Specification generation is temporarily unavailable. Please try again or enter the details manually.' }, { status: 502 })
   }
 }
