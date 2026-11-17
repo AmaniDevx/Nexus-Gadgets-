@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { hasAdminAccess } from '@/lib/admin-access'
 import { isSupabaseConfigured } from './config'
 
 const publicAdminPaths = new Set(['/admin/forgot-password'])
@@ -49,7 +50,7 @@ export async function updateAdminSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!protectedRequest) return supabaseResponse
 
-  const authorized = Boolean(user && user.id === process.env.SUPABASE_ADMIN_USER_ID && user.app_metadata?.role === 'admin')
+  const authorized = hasAdminAccess(user, process.env.SUPABASE_ADMIN_USER_ID)
   if (authorized) return supabaseResponse
 
   if (user) await supabase.auth.signOut()

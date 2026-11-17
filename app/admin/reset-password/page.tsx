@@ -4,7 +4,6 @@ import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { hasAdminAccess } from '@/lib/admin-access'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -27,25 +26,28 @@ export default function ResetPasswordPage() {
     }
 
     setPending(true)
-    const { data: authData, error: authError } = await supabase.auth.getUser()
-    if (authError || !hasAdminAccess(authData.user)) {
-      setError('This recovery link is invalid or expired. Request a new reset link.')
-      setPending(false)
-      return
-    }
+    try {
+      const accessResponse = await fetch('/api/admin/access', { cache: 'no-store' })
+      if (!accessResponse.ok) {
+        setError('This recovery link is invalid or expired. Request a new reset link.')
+        return
+      }
 
-    const { error: updateError } = await supabase.auth.updateUser({ password })
-    if (updateError) {
-      setError(updateError.status === 429
-        ? 'Too many requests. Wait a moment before trying again.'
-        : 'The password could not be updated. Request a new reset link and try again.')
-      setPending(false)
-      return
-    }
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      if (updateError) {
+        setError(updateError.status === 429
+          ? 'Too many requests. Wait a moment before trying again.'
+          : 'The password could not be updated. Request a new reset link and try again.')
+        return
+      }
 
-    await supabase.auth.signOut()
-    setComplete(true)
-    setPending(false)
+      await supabase.auth.signOut()
+      setComplete(true)
+    } catch {
+      setError('The password could not be updated. Request a new reset link and try again.')
+    } finally {
+      setPending(false)
+    }
   }
 
   return <main className="flex min-h-screen items-center justify-center bg-[#F5F5F7] px-5 py-10 text-[#1D1D1F]">

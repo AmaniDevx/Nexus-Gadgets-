@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { hasAdminAccess } from '@/lib/admin-access'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { data: { user } } = await supabase.auth.getUser()
-  const authorized = Boolean(user && user.id === process.env.SUPABASE_ADMIN_USER_ID && user.app_metadata?.role === 'admin')
+  const authorized = hasAdminAccess(user, process.env.SUPABASE_ADMIN_USER_ID)
   if (!authorized) {
     await supabase.auth.signOut()
     return NextResponse.redirect(new URL('/admin?reason=not-authorized', url.origin))

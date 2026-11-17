@@ -4,7 +4,6 @@ import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
-import { hasAdminAccess } from '@/lib/admin-access'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -20,30 +19,35 @@ export default function AdminLoginPage() {
       setError('Admin sign-in is unavailable because Supabase is not configured for this deployment.')
       return
     }
+
     setPending(true)
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      if (authError) {
+        const actionRequired = authError.code === 'email_not_confirmed'
+          ? 'Confirm your email address before signing in.'
+          : authError.status === 429
+            ? 'Too many attempts. Please wait a moment and try again.'
+            : authError.code === 'invalid_credentials'
+              ? 'Invalid email or password.'
+              : 'Sign-in could not be completed. Please try again.'
+        setError(actionRequired)
+        setPending(false)
+        return
+      }
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
-    if (authError) {
-      const actionRequired = authError.code === 'email_not_confirmed'
-        ? 'Confirm your email address before signing in.'
-        : authError.status === 429
-          ? 'Too many attempts. Please wait a moment and try again.'
-          : authError.code === 'invalid_credentials'
-            ? 'Invalid email or password.'
-            : 'Sign-in could not be completed. Please try again.'
-      setError(actionRequired)
+      const accessResponse = await fetch('/api/admin/access', { cache: 'no-store' })
+      if (!accessResponse.ok) {
+        await supabase.auth.signOut()
+        setError('This account is not authorized to access the admin area.')
+        setPending(false)
+        return
+      }
+      router.replace('/?admin=1')
+    } catch {
+      setError('Sign-in could not be completed. Please try again.')
       setPending(false)
-      return
     }
-
-    if (!hasAdminAccess(data.user)) {
-      await supabase.auth.signOut()
-      setError('This account is not authorized to access the admin area.')
-      setPending(false)
-      return
-    }
-
-    router.replace('/?admin=1')
   }
 
   return <main className="flex min-h-screen items-center justify-center bg-[#F5F5F7] px-5 py-10 text-[#1D1D1F]">

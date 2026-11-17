@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { hasAdminAccess } from '@/lib/admin-access'
 
 const statuses = ['Pending WhatsApp', 'Confirmed', 'Dispatched', 'Delivered', 'Cancelled']
 
@@ -15,9 +14,9 @@ export default function AnalyticsPage() {
   useEffect(() => {
     let active = true
     async function loadAdminData() {
-      const { data: authData } = await supabase.auth.getUser()
+      const accessResponse = await fetch('/api/admin/access', { cache: 'no-store' })
       if (!active) return
-      if (!hasAdminAccess(authData.user)) {
+      if (!accessResponse.ok) {
         window.location.replace('/admin')
         return
       }
@@ -50,7 +49,10 @@ export default function AnalyticsPage() {
 
   return <main className="min-h-screen bg-[#F5F5F7] px-5 py-8 text-[#1D1D1F] md:px-8">
     <div className="mx-auto max-w-[1100px]">
-      <a href="/" className="text-sm text-[#0071E3]">← Storefront</a>
+      <div className="flex items-center justify-between gap-4">
+        <a href="/" className="text-sm text-[#0071E3]">← Storefront</a>
+        <button onClick={() => { void supabase.auth.signOut().finally(() => window.location.replace('/admin')) }} className="rounded-full bg-white px-4 py-2 text-sm font-medium text-[#1D1D1F] shadow-sm">Sign out</button>
+      </div>
       <h1 className="mt-4 text-3xl font-semibold tracking-tight">Analytics &amp; Orders</h1>
       {message && <p role="status" className="mt-4 rounded-xl bg-white p-4 text-sm text-[#626267]">{message}</p>}
       <section className="mt-8 rounded-2xl bg-white p-5 shadow-sm">

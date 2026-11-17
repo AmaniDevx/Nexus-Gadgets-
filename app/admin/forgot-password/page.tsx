@@ -20,18 +20,21 @@ export default function ForgotPasswordPage() {
     }
 
     setPending(true)
-    const redirectTo = new URL('/auth/callback?next=/admin/reset-password', window.location.origin).toString()
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
-    setPending(false)
-
-    if (resetError) {
-      setError(resetError.status === 429
-        ? 'Too many requests. Wait a moment before trying again.'
-        : 'We could not send the recovery email. Please try again later.')
-      return
+    try {
+      const redirectTo = new URL('/auth/callback?next=/admin/reset-password', window.location.origin).toString()
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+      if (resetError) {
+        setError(resetError.status === 429
+          ? 'Too many requests. Wait a moment before trying again.'
+          : 'We could not send the recovery email. Please try again later.')
+        return
+      }
+      setMessage('If an account matches that email, a password reset link will be sent.')
+    } catch {
+      setError('We could not send the recovery email. Please try again later.')
+    } finally {
+      setPending(false)
     }
-
-    setMessage('If an account matches that email, a password reset link will be sent.')
   }
 
   return <main className="flex min-h-screen items-center justify-center bg-[#F5F5F7] px-5 py-10 text-[#1D1D1F]">
