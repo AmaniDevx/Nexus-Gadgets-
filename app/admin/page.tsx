@@ -59,6 +59,7 @@ export default function AdminLoginPage() {
         {error&&<p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
         <button disabled={pending||!isSupabaseConfigured} className="mt-1 rounded-full bg-[#1D1D1F] px-5 py-3 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60">{pending?'Signing in…':isSupabaseConfigured?'Sign in':'Sign-in unavailable'}</button>
       </form>
+      <Link href="/admin/forgot-password" className="mt-4 inline-block text-sm text-[#0071E3] hover:underline">Forgot your password?</Link>
       <Link href="/" className="mt-6 inline-block text-sm text-[#86868B] hover:text-[#1D1D1F]">Return to storefront</Link>
     </section>
   </main>
