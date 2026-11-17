@@ -1,16 +1,28 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { useState, type FormEvent } from 'react'
+import type { AuthError } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { APPROVED_ADMIN_EMAIL } from '@/lib/admin-access'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
+
+function getSignInErrorMessage(error: AuthError) {
+  if (error.status === 429) return 'Too many sign-in attempts. Wait a moment and try again.'
+  if (error.code === 'email_not_confirmed') return 'Confirm your email address before signing in.'
+  if (error.code === 'invalid_credentials') return 'Invalid email or password.'
+  if (error.name === 'AuthRetryableFetchError' || error.status === 0) {
+    return 'Unable to connect to Supabase. Check your connection and try again.'
+  }
+  return 'Supabase could not complete sign-in. Please try again.'
+}
 
 export default function AdminLoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [pending, setPending] = useState(false)
+  const [email, setEmail] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [error, setError] = useState<string>('')
+  const [pending, setPending] = useState<boolean>(false)
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -21,24 +33,58 @@ export default function AdminLoginPage() {
     }
 
     setPending(true)
+    let sessionEstablished = false
+    let authorized = false
+
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
-      if (authError || !data.user) {
-        setError('Invalid email or password.')
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+
+      if (authError) {
+        setError(getSignInErrorMessage(authError))
+        return
+      }
+      if (!data.user || !data.session) {
+        setError('Supabase did not establish a session. Confirm your email and try again.')
         return
       }
 
-      const accessResponse = await fetch(`/api/admin/access?userId=${encodeURIComponent(data.user.id)}`, { cache: 'no-store' })
-      if (!accessResponse.ok) {
-        await supabase.auth.signOut()
+      sessionEstablished = true
+      if (data.user.email?.trim().toLowerCase() !== APPROVED_ADMIN_EMAIL) {
         setError('This account is not authorized to access the admin area.')
         return
       }
 
+      const accessResponse = await fetch(
+        `/api/admin/access?userId=${encodeURIComponent(data.user.id)}`,
+        { cache: 'no-store' },
+      )
+
+      if (accessResponse.status === 503) {
+        setError('Admin authentication is unavailable. Please try again later.')
+        return
+      }
+      if (accessResponse.status === 401) {
+        setError('Your session could not be verified. Please sign in again.')
+        return
+      }
+      if (!accessResponse.ok) {
+        setError('This account is not authorized to access the admin area.')
+        return
+      }
+
+      authorized = true
       router.replace('/?admin=1')
-    } catch {
-      setError('Sign-in could not be completed. Please try again.')
+    } catch (error: unknown) {
+      setError(error instanceof TypeError || (error instanceof Error && error.name === 'AuthRetryableFetchError')
+        ? 'Unable to connect to Supabase. Check your connection and try again.'
+        : 'Sign-in failed unexpectedly. Please try again.')
     } finally {
+      if (sessionEstablished && !authorized) {
+        await supabase.auth.signOut().catch(() => undefined)
+      }
       setPending(false)
     }
   }
