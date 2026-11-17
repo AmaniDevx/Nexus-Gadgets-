@@ -22,30 +22,23 @@ export default function AdminLoginPage() {
 
     setPending(true)
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-      if (authError) {
-        const actionRequired = authError.code === 'email_not_confirmed'
-          ? 'Confirm your email address before signing in.'
-          : authError.status === 429
-            ? 'Too many attempts. Please wait a moment and try again.'
-            : authError.code === 'invalid_credentials'
-              ? 'Invalid email or password.'
-              : 'Sign-in could not be completed. Please try again.'
-        setError(actionRequired)
-        setPending(false)
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      if (authError || !data.user) {
+        setError('Invalid email or password.')
         return
       }
 
-      const accessResponse = await fetch('/api/admin/access', { cache: 'no-store' })
+      const accessResponse = await fetch(`/api/admin/access?userId=${encodeURIComponent(data.user.id)}`, { cache: 'no-store' })
       if (!accessResponse.ok) {
         await supabase.auth.signOut()
         setError('This account is not authorized to access the admin area.')
-        setPending(false)
         return
       }
+
       router.replace('/?admin=1')
     } catch {
       setError('Sign-in could not be completed. Please try again.')
+    } finally {
       setPending(false)
     }
   }
