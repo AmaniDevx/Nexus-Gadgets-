@@ -2,9 +2,11 @@
 
 import { useState, type FormEvent } from 'react'
 import { ArrowUpRight, X } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { buildWhatsAppUrl, WHATSAPP_BUSINESS_DISPLAY } from '@/lib/whatsapp'
 
 type OrderProduct = {
+  id: string
   name: string
   summary: string
   price: number
@@ -25,9 +27,10 @@ export function WhatsAppProductOrder({ product, onClose }: WhatsAppProductOrderP
     const chosenLocation = location.trim()
     if (!chosenLocation) return
 
+    const orderNumber = `NX-${Date.now().toString(36).toUpperCase()}`
     const specs = Object.entries(product.specs).slice(0, 8).map(([label, value]) => `${label}: ${value}`)
     const message = [
-      'Hello Nexus Gadgets! I would like to order:',
+      `Hello Nexus Gadgets! I would like to order (${orderNumber}):`,
       `Product: ${product.name}`,
       `Price: KES ${product.price.toLocaleString('en-KE')}`,
       `Summary: ${product.summary}`,
@@ -37,6 +40,14 @@ export function WhatsAppProductOrder({ product, onClose }: WhatsAppProductOrderP
     ].join('\n')
 
     window.open(buildWhatsAppUrl(message), '_blank', 'noopener,noreferrer')
+    void supabase.from('orders').insert({
+      order_number: orderNumber,
+      items: [{ product_id: product.id, name: product.name, quantity: 1, unit_price: product.price }],
+      total_kes: product.price,
+      customer_name: customerName.trim() || null,
+      location: chosenLocation,
+      status: 'Pending WhatsApp',
+    })
     onClose()
   }
 

@@ -64,68 +64,68 @@ function drawImageContain(context: CanvasRenderingContext2D, image: HTMLImageEle
 function createAdCanvas(context: CanvasRenderingContext2D, product: AdProduct, image: HTMLImageElement) {
   const canvas = context.canvas
   canvas.width = 1080
-  canvas.height = 1350
+  canvas.height = 1920
 
   context.fillStyle = '#f4f3ef'
   context.fillRect(0, 0, canvas.width, canvas.height)
   context.fillStyle = '#1d1d1f'
   context.font = '700 30px Arial, sans-serif'
-  context.fillText('NEXUS GADGETS', 68, 68)
+  context.fillText('NEXUS GADGETS', 56, 68)
   context.textAlign = 'right'
   context.fillStyle = '#6e6e73'
   context.font = '500 18px Arial, sans-serif'
-  context.fillText('THOUGHTFUL TECH · KENYA', 1012, 67)
+  context.fillText('THOUGHTFUL TECH · KENYA', 1024, 67)
   context.textAlign = 'left'
 
   context.fillStyle = '#e8e7e3'
   context.beginPath()
-  context.roundRect(56, 102, 968, 560, 28)
+  context.roundRect(36, 100, 1008, 1040, 32)
   context.fill()
-  drawImageContain(context, image, 88, 122, 904, 520)
+  drawImageContain(context, image, 60, 118, 960, 1004)
 
   context.fillStyle = '#0071e3'
   context.font = '700 18px Arial, sans-serif'
-  context.fillText(`${product.category.toUpperCase()}  ·  ${product.condition.toUpperCase()}`, 68, 714)
+  context.fillText(`${product.category.toUpperCase()}  ·  ${product.condition.toUpperCase()}`, 64, 1200)
 
   context.fillStyle = '#1d1d1f'
-  context.font = '700 54px Arial, sans-serif'
-  const nameBottom = drawWrappedText(context, product.name, 68, 780, 940, 61, 2)
+  context.font = '700 56px Arial, sans-serif'
+  const nameBottom = drawWrappedText(context, product.name, 64, 1272, 952, 64, 2)
 
   context.fillStyle = '#6e6e73'
-  context.font = '400 22px Arial, sans-serif'
-  drawWrappedText(context, product.summary, 68, nameBottom + 8, 940, 30, 1)
+  context.font = '400 24px Arial, sans-serif'
+  drawWrappedText(context, product.summary, 64, nameBottom + 8, 952, 32, 1)
 
   const specs = Object.entries(product.specs).slice(0, 4)
-  const specTop = 954
+  const specTop = 1480
   specs.forEach(([label, value], index) => {
     const column = index % 2
     const row = Math.floor(index / 2)
-    const x = column === 0 ? 68 : 554
-    const y = specTop + row * 86
+    const x = column === 0 ? 64 : 548
+    const y = specTop + row * 92
     context.fillStyle = '#86868b'
-    context.font = '700 15px Arial, sans-serif'
+    context.font = '700 16px Arial, sans-serif'
     context.fillText(label.toUpperCase(), x, y)
     context.fillStyle = '#1d1d1f'
-    context.font = '500 22px Arial, sans-serif'
-    drawWrappedText(context, value, x, y + 31, 430, 26, 1)
+    context.font = '500 23px Arial, sans-serif'
+    drawWrappedText(context, value, x, y + 32, 440, 27, 1)
   })
 
   context.fillStyle = '#1d1d1f'
   context.beginPath()
-  context.roundRect(56, 1168, 968, 126, 24)
+  context.roundRect(36, 1700, 1008, 174, 28)
   context.fill()
   context.fillStyle = '#ffffff'
   context.font = '700 20px Arial, sans-serif'
-  context.fillText('AVAILABLE NOW', 84, 1210)
-  context.font = '700 46px Arial, sans-serif'
-  context.fillText(`KES ${product.price.toLocaleString('en-KE')}`, 84, 1267)
+  context.fillText('AVAILABLE NOW', 68, 1746)
+  context.font = '700 50px Arial, sans-serif'
+  context.fillText(`KES ${product.price.toLocaleString('en-KE')}`, 68, 1820)
   context.textAlign = 'right'
   context.fillStyle = '#a9d9bd'
-  context.font = '700 17px Arial, sans-serif'
-  context.fillText('ORDER ON WHATSAPP', 992, 1210)
+  context.font = '700 18px Arial, sans-serif'
+  context.fillText('ORDER ON WHATSAPP', 1012, 1746)
   context.fillStyle = '#ffffff'
-  context.font = '500 24px Arial, sans-serif'
-  context.fillText(WHATSAPP_BUSINESS_DISPLAY, 992, 1255)
+  context.font = '500 25px Arial, sans-serif'
+  context.fillText(WHATSAPP_BUSINESS_DISPLAY, 1012, 1792)
   context.textAlign = 'left'
 }
 
@@ -175,7 +175,7 @@ export function ProductAdCreator({ products }: ProductAdCreatorProps) {
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/5 bg-[#F5F5F7] p-4">
       <div>
         <p className="font-medium">Ready-to-share product creative</p>
-        <p className="mt-1 text-xs text-[#6E6E73]">Create a 1080 × 1350 PNG with product photo, specs, price, and WhatsApp contact.</p>
+        <p className="mt-1 text-xs text-[#6E6E73]">Create a full-screen 1080 × 1920 PNG for WhatsApp Status and TikTok, with a large product photo, specs, price, and WhatsApp contact.</p>
       </div>
       <button type="button" onClick={() => setIsOpen(true)} disabled={!products.length} className="inline-flex items-center gap-2 rounded-full bg-[#1D1D1F] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"><Megaphone size={16}/> Create product ad</button>
     </div>
@@ -208,7 +208,7 @@ export function ProductAdCreator({ products }: ProductAdCreatorProps) {
                 {Object.entries(selectedProduct.specs).slice(0, 4).map(([label, value]) => <li key={label} className="flex justify-between gap-3"><span className="text-[#86868B]">{label}</span><span className="text-right font-medium">{value}</span></li>)}
               </ul>
             </div>
-            <p className="text-xs leading-5 text-[#86868B]">The exported image is 1080 × 1350 px, optimized for portrait social posts. The poster includes WhatsApp Business contact {WHATSAPP_BUSINESS_DISPLAY}.</p>
+            <p className="text-xs leading-5 text-[#86868B]">The exported image is 1080 × 1920 px in full-screen 9:16 portrait, ready for WhatsApp Status and TikTok. The poster includes WhatsApp Business contact {WHATSAPP_BUSINESS_DISPLAY}.</p>
             {error&&<p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
             {generated&&<p role="status" className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-800">Ad downloaded. You can change the product and export another version.</p>}
             <button type="button" onClick={() => void generateAd()} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#0071E3] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#0077ED]"><ArrowDownToLine size={16}/> Generate &amp; download PNG</button>
@@ -216,10 +216,10 @@ export function ProductAdCreator({ products }: ProductAdCreatorProps) {
 
           <div className="mx-auto w-full max-w-[390px]">
             <p className="mb-2 text-xs font-medium uppercase tracking-[.12em] text-[#86868B]">Live preview</p>
-            <article className="overflow-hidden rounded-[26px] bg-[#f4f3ef] shadow-[0_12px_36px_rgba(0,0,0,0.12)]">
-              <div className="flex items-center justify-between px-5 pt-5 text-[10px] font-bold tracking-[.1em]"><span>NEXUS GADGETS</span><span className="text-[#6E6E73]">THOUGHTFUL TECH · KENYA</span></div>
-              <div className="m-3 grid h-[180px] place-items-center overflow-hidden rounded-2xl bg-[#e8e7e3] p-3"><img src={selectedProduct.image} alt={`${selectedProduct.name} ad preview`} className="max-h-full max-w-full object-contain"/></div>
-              <div className="px-5 pb-4">
+            <article className="flex aspect-[9/16] flex-col overflow-hidden rounded-[26px] bg-[#f4f3ef] shadow-[0_12px_36px_rgba(0,0,0,0.12)]">
+              <div className="flex shrink-0 items-center justify-between px-4 pt-4 text-[10px] font-bold tracking-[.1em]"><span>NEXUS GADGETS</span><span className="text-[#6E6E73]">THOUGHTFUL TECH · KENYA</span></div>
+              <div className="m-3 grid min-h-0 flex-[1.4] place-items-center overflow-hidden rounded-2xl bg-[#e8e7e3] p-3"><img src={selectedProduct.image} alt={`${selectedProduct.name} ad preview`} className="max-h-full max-w-full object-contain"/></div>
+              <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
                 <p className="text-[10px] font-bold tracking-[.08em] text-[#0071E3]">{selectedProduct.category.toUpperCase()} · {selectedProduct.condition.toUpperCase()}</p>
                 <h3 className="mt-2 line-clamp-2 text-xl font-bold leading-tight">{selectedProduct.name}</h3>
                 <p className="mt-1 line-clamp-1 text-xs text-[#6E6E73]">{selectedProduct.summary}</p>
