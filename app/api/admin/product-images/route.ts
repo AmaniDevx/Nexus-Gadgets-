@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       return jsonError('The image uploaded, but Supabase did not return a public URL.', 502)
     }
     return NextResponse.json(
-      { image: publicData.publicUrl },
+      { image: publicData.publicUrl, path: data.path },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {
