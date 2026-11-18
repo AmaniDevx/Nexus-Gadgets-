@@ -1,5 +1,3 @@
-import { isSupabaseConfigured, supabase } from '@/lib/supabase'
-
 export type Product = {
   id: string
   name: string
@@ -132,17 +130,13 @@ export function toProductRow(product: Product) {
 }
 
 export async function fetchProducts(): Promise<Product[]> {
-  if (!isSupabaseConfigured) throw new Error('Supabase is not configured for this deployment.')
+  const response = await fetch('/api/products', { cache: 'no-store' })
+  const result = await response.json().catch(() => null)
 
-  const { data, error } = await supabase
-    .from('products')
-    .select(PRODUCT_COLUMNS)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('[products] Supabase catalog fetch failed:', error.message)
-    throw new Error(`Could not load live products: ${error.message}`)
+  if (!response.ok) {
+    throw new Error(typeof result?.error === 'string' ? result.error : 'Could not load live products.')
   }
+  if (!Array.isArray(result)) throw new Error('The product catalog response is invalid.')
 
-  return ((data || []) as unknown as ProductRow[]).map(mapProductRow)
+  return result as Product[]
 }
