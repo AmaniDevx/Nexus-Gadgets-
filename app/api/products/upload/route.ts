@@ -28,6 +28,18 @@ function isRecord(value: unknown): value is Record<string, string> {
     Object.values(value).every(item => typeof item === 'string'))
 }
 
+function getErrorReason(error: unknown) {
+  if (!error || typeof error !== 'object') return 'Unknown product upload error.'
+
+  const err = error as { cause?: unknown; message?: unknown }
+  if (err.cause && typeof err.cause === 'object') {
+    const cause = err.cause as { message?: unknown; code?: unknown }
+    if (typeof cause.message === 'string' && cause.message) return cause.message
+    if (typeof cause.code === 'string' && cause.code) return cause.code
+  }
+  return typeof err.message === 'string' && err.message ? err.message : 'Unknown product upload error.'
+}
+
 export async function POST(request: Request) {
   const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value
   if (!await verifyAdminSessionToken(token)) return jsonError('Admin access is required.', 401)
@@ -84,7 +96,8 @@ export async function POST(request: Request) {
         upsert: false,
       })
 
-      if (error || !data) throw new Error(error?.message || 'Supabase returned no upload result.')
+      if (error) throw error
+      if (!data) throw new Error('Supabase returned no upload result.')
       uploadedPaths.push(data.path)
 
       const { data: publicData } = storage.getPublicUrl(data.path)
@@ -98,21 +111,28 @@ export async function POST(request: Request) {
       images: imageUrls,
     }
     const { error } = await supabase.from('products').insert(toProductRow(productWithImages))
-    if (error) throw new Error(`Could not save product to public.products: ${error.message}`)
+    if (error) throw error
 
     return NextResponse.json({ ok: true }, { status: 201, headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     if (uploadedPaths.length) {
-      const { error: cleanupError } = await storage.remove(uploadedPaths)
-      if (cleanupError) {
+      try {
+        const { error: cleanupError } = await storage.remove(uploadedPaths)
+        if (cleanupError) {
+          console.error('[products/upload] Could not clean up uploaded images', {
+            paths: uploadedPaths,
+            reason: getErrorReason(cleanupError),
+          })
+        }
+      } catch (cleanupError) {
         console.error('[products/upload] Could not clean up uploaded images', {
           paths: uploadedPaths,
-          reason: cleanupError.message,
+          reason: getErrorReason(cleanupError),
         })
       }
     }
 
-    const reason = error instanceof Error ? error.message : 'Unknown product upload error.'
+    const reason = getErrorReason(error)
     console.error('[products/upload] Server-side image upload or product insert failed:', reason)
     const status = /row-level security|permission|not authorized|unauthorized/i.test(reason) ? 403 : 502
     return jsonError(reason, status)
