@@ -2,14 +2,17 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/admin-session'
-import { isSupabaseConfigured } from '@/lib/supabase/config'
 
 const ORDER_STATUSES = ['Pending WhatsApp', 'Confirmed', 'Dispatched', 'Delivered', 'Cancelled'] as const
+
+function isAdminSupabaseConfigured() {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+}
 
 function createSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false } },
   )
 }
@@ -25,7 +28,13 @@ async function isAdmin() {
 
 export async function GET() {
   if (!await isAdmin()) return jsonError('Admin access is required.', 401)
-  if (!isSupabaseConfigured) return jsonError('Supabase is not configured.', 503)
+  if (!isAdminSupabaseConfigured()) {
+    return NextResponse.json({
+      orders: [],
+      views: [],
+      warning: 'Analytics requires the server-only SUPABASE_SERVICE_ROLE_KEY environment variable.',
+    }, { headers: { 'Cache-Control': 'no-store' } })
+  }
 
   const supabase = createSupabaseClient()
   const [ordersResult, viewsResult] = await Promise.all([
@@ -53,7 +62,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   if (!await isAdmin()) return jsonError('Admin access is required.', 401)
-  if (!isSupabaseConfigured) return jsonError('Supabase is not configured.', 503)
+  if (!isAdminSupabaseConfigured()) return jsonError('Analytics service access is not configured.', 503)
 
   let body: { orderId?: unknown; status?: unknown }
   try {
