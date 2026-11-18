@@ -5,7 +5,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/admin-sessi
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 
 const MAX_IMAGE_SIZE = 15 * 1024 * 1024
-const BUCKET_NAME = 'nexus-images'
+const BUCKET_NAME = 'nexus-images' as const
 
 function jsonError(error: string, status: number) {
   return NextResponse.json({ error }, { status, headers: { 'Cache-Control': 'no-store' } })
@@ -58,24 +58,38 @@ export async function POST(request: Request) {
     })
 
     if (error || !data) {
-      const message = error?.message.toLowerCase() || ''
+      const reason = error?.message || 'Supabase returned no upload result'
+      const message = reason.toLowerCase()
+      console.error('[admin/product-images] Storage upload failed', {
+        bucket: BUCKET_NAME,
+        path,
+        statusCode: error?.statusCode,
+        error,
+      })
       if (/bucket.*not found|not found.*bucket/.test(message)) {
-        return jsonError(`The ${BUCKET_NAME} storage bucket was not found.`, 503)
+        return jsonError(`The ${BUCKET_NAME} storage bucket was not found: ${reason}`, 503)
       }
       if (/row-level security|permission|not authorized|unauthorized/.test(message)) {
-        return jsonError(`Storage denied this upload. Check the ${BUCKET_NAME} bucket upload policy.`, 403)
+        return jsonError(`Storage denied this upload to ${BUCKET_NAME}: ${reason}`, 403)
       }
-      console.error('[admin/product-images] Storage upload failed:', error?.message || 'No upload result')
-      return jsonError('Storage could not save this image. Please try again.', 502)
+      return jsonError(`Supabase Storage upload failed: ${reason}`, error?.statusCode === '403' ? 403 : 502)
     }
 
     const { data: publicData } = storage.getPublicUrl(data.path)
+    if (!publicData.publicUrl) {
+      console.error('[admin/product-images] Public URL generation returned an empty URL', {
+        bucket: BUCKET_NAME,
+        path: data.path,
+      })
+      return jsonError('The image uploaded, but Supabase did not return a public URL.', 502)
+    }
     return NextResponse.json(
-      { image: publicData.publicUrl },
+      { image: publicData.publicUrl, path: data.path },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {
-    console.error('[admin/product-images] Storage request failed:', error instanceof Error ? error.message : 'Unknown error')
-    return jsonError('The image storage service could not be reached. Please try again.', 502)
+    const reason = error instanceof Error ? error.message : 'Unknown Supabase Storage error'
+    console.error('[admin/product-images] Storage request failed', { bucket: BUCKET_NAME, path, reason, error })
+    return jsonError(`Supabase Storage request failed: ${reason}`, 502)
   }
 }
