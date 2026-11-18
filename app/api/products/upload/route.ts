@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/admin-session'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { diagnosticSupabaseFetch, getSupabaseErrorReason } from '@/lib/supabase/network-errors'
 import { toProductRow, type Product } from '@/lib/products'
 
 export const runtime = 'nodejs'
@@ -19,25 +20,16 @@ function createSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false } },
+    {
+      auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+      global: { fetch: diagnosticSupabaseFetch },
+    },
   )
 }
 
 function isRecord(value: unknown): value is Record<string, string> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value) &&
     Object.values(value).every(item => typeof item === 'string'))
-}
-
-function getErrorReason(error: unknown) {
-  if (!error || typeof error !== 'object') return 'Unknown product upload error.'
-
-  const err = error as { cause?: unknown; message?: unknown }
-  if (err.cause && typeof err.cause === 'object') {
-    const cause = err.cause as { message?: unknown; code?: unknown }
-    if (typeof cause.message === 'string' && cause.message) return cause.message
-    if (typeof cause.code === 'string' && cause.code) return cause.code
-  }
-  return typeof err.message === 'string' && err.message ? err.message : 'Unknown product upload error.'
 }
 
 export async function POST(request: Request) {
@@ -121,18 +113,18 @@ export async function POST(request: Request) {
         if (cleanupError) {
           console.error('[products/upload] Could not clean up uploaded images', {
             paths: uploadedPaths,
-            reason: getErrorReason(cleanupError),
+            reason: getSupabaseErrorReason(cleanupError),
           })
         }
       } catch (cleanupError) {
         console.error('[products/upload] Could not clean up uploaded images', {
           paths: uploadedPaths,
-          reason: getErrorReason(cleanupError),
+          reason: getSupabaseErrorReason(cleanupError),
         })
       }
     }
 
-    const reason = getErrorReason(error)
+    const reason = getSupabaseErrorReason(error)
     console.error('[products/upload] Server-side image upload or product insert failed:', reason)
     const status = /row-level security|permission|not authorized|unauthorized/i.test(reason) ? 403 : 502
     return jsonError(reason, status)
