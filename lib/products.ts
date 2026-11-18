@@ -23,12 +23,11 @@ type ProductRow = {
   storage: string | null
   features: string | string[] | null
   full_specs: Record<string, unknown> | string | null
-  best_suited_for: string | null
   image_url: string | null
   created_at: string | null
 }
 
-export const PRODUCT_COLUMNS = 'id,name,category,price,processor,ram,storage,features,full_specs,best_suited_for,image_url,created_at'
+export const PRODUCT_COLUMNS = 'id,name,category,price,processor,ram,storage,features,full_specs,image_url,created_at'
 
 const metadataKeys = new Set([
   '__nexus_brand',
@@ -76,7 +75,7 @@ export function mapProductRow(row: ProductRow): Product {
   const features = Array.isArray(row.features)
     ? row.features.map(toText).filter(Boolean).join(', ')
     : toText(row.features)
-  const bestSuitedFor = row.best_suited_for || findSpec(specs, /best suited for|use cases?|recommended use/i)
+  const bestSuitedFor = findSpec(specs, /best suited for|use cases?|recommended use/i)
 
   if (row.processor && !findSpec(specs, /processor|cpu|chip/i)) specs.Processor = row.processor
   if (row.ram && !findSpec(specs, /ram|memory/i)) specs.RAM = row.ram
@@ -104,8 +103,6 @@ export function toProductRow(product: Product) {
   const processor = findSpec(fullSpecs, /processor|cpu|chip/i)
   const ram = findSpec(fullSpecs, /ram|memory/i)
   const storage = findSpec(fullSpecs, /storage|ssd/i)
-  const bestSuitedFor = findSpec(fullSpecs, /best suited for|use cases?|recommended use/i)
-
   Object.assign(fullSpecs, {
     __nexus_brand: product.brand || null,
     __nexus_condition: product.condition || 'Brand New',
@@ -124,7 +121,6 @@ export function toProductRow(product: Product) {
     storage,
     features: product.summary,
     full_specs: fullSpecs,
-    best_suited_for: bestSuitedFor,
     image_url: product.image,
   }
 }
