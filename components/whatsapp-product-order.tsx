@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from 'react'
 import { ArrowUpRight, X } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { buildWhatsAppUrl, WHATSAPP_BUSINESS_DISPLAY } from '@/lib/whatsapp'
 
 type OrderProduct = {
@@ -40,14 +39,16 @@ export function WhatsAppProductOrder({ product, onClose }: WhatsAppProductOrderP
     ].join('\n')
 
     window.open(buildWhatsAppUrl(message), '_blank', 'noopener,noreferrer')
-    void supabase.from('orders').insert({
-      order_number: orderNumber,
-      items: [{ product_id: product.id, name: product.name, quantity: 1, unit_price: product.price }],
-      total_kes: product.price,
-      customer_name: customerName.trim() || null,
-      location: chosenLocation,
-      status: 'Pending WhatsApp',
-    })
+    void fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order_number: orderNumber,
+        items: [{ product_id: product.id, quantity: 1 }],
+        customer_name: customerName.trim() || null,
+        location: chosenLocation,
+      }),
+    }).catch(() => undefined)
     onClose()
   }
 

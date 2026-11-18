@@ -6,7 +6,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ArrowDownRight, ArrowUpRight, Box, Eye, PackageCheck, ShoppingCart } from 'lucide-react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { supabase } from '@/lib/supabase'
 
 type OrderItem = {
   product_id?: string
@@ -41,22 +40,15 @@ const viewsConfig = { views: { label: 'Views', color: 'var(--chart-1)' } } satis
 const revenueConfig = { revenue: { label: 'Delivered revenue', color: 'var(--chart-2)' } } satisfies ChartConfig
 
 async function loadAnalytics(): Promise<AnalyticsData> {
-  const accessResponse = await fetch('/api/admin/access', { cache: 'no-store' })
-  if (!accessResponse.ok) {
+  const response = await fetch('/api/admin/analytics', { cache: 'no-store' })
+  if (response.status === 401) {
     window.location.replace('/admin')
     throw new Error('Admin access required')
   }
 
-  const [ordersResult, viewsResult] = await Promise.all([
-    supabase.from('orders').select('id, order_number, items, total_kes, customer_name, location, status, created_at').order('created_at', { ascending: false }),
-    supabase.from('product_views').select('product_id, product_name'),
-  ])
-
-  return {
-    orders: (ordersResult.data || []) as OrderRecord[],
-    views: (viewsResult.data || []) as ProductView[],
-    warning: ordersResult.error || viewsResult.error ? 'Some analytics data could not be loaded. Check the existing database table permissions and try again.' : '',
-  }
+  const result = await response.json().catch(() => null)
+  if (!response.ok) throw new Error(result?.error || 'Analytics could not be loaded.')
+  return result as AnalyticsData
 }
 
 function orderItems(order: OrderRecord): OrderItem[] {
@@ -175,8 +167,12 @@ export default function AdminAnalyticsDashboard() {
   async function updateStatus(orderId: string, status: string) {
     setNotice('')
     setSavingOrderId(orderId)
-    const { error: updateError } = await supabase.from('orders').update({ status }).eq('id', orderId)
-    if (updateError) {
+    const response = await fetch('/api/admin/analytics', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, status }),
+    })
+    if (!response.ok) {
       setNotice('Could not update this order. Please try again.')
     } else {
       await mutate(current => current ? { ...current, orders: current.orders.map(order => order.id === orderId ? { ...order, status } : order) } : current, { revalidate: false })
