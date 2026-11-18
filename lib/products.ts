@@ -13,6 +13,19 @@ export type Product = {
   featured?: boolean
 }
 
+export function getMajorProductSpecs(specs: Record<string, string>): Array<[string, string]> {
+  const majorSpecs = [
+    { label: 'Processor', pattern: /processor|cpu|chip/i },
+    { label: 'RAM', pattern: /ram|memory/i },
+    { label: 'Storage', pattern: /storage|ssd/i },
+  ]
+
+  return majorSpecs.flatMap(({ label, pattern }) => {
+    const entry = Object.entries(specs ?? {}).find(([key, value]) => pattern.test(key) && value.trim())
+    return entry ? [[label, entry[1]]] : []
+  })
+}
+
 type ProductRow = {
   id: string | number
   name: string | null
