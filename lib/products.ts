@@ -16,6 +16,7 @@ export type Product = {
 type ProductRow = {
   id: string | number
   name: string | null
+  title: string | null
   category: string | null
   price: number | string | null
   processor: string | null
@@ -27,7 +28,7 @@ type ProductRow = {
   created_at: string | null
 }
 
-export const PRODUCT_COLUMNS = 'id,name,category,price,processor,ram,storage,features,full_specs,image_url,created_at'
+export const PRODUCT_COLUMNS = 'id,name,title,category,price,processor,ram,storage,features,full_specs,image_url,created_at'
 
 const metadataKeys = new Set([
   '__nexus_brand',
@@ -84,7 +85,7 @@ export function mapProductRow(row: ProductRow): Product {
 
   return {
     id: String(row.id),
-    name: row.name || '',
+    name: row.name || row.title || '',
     category: row.category || 'Accessories',
     brand: toText(fullSpecs.__nexus_brand) || undefined,
     price: Number(row.price || 0),
@@ -114,6 +115,7 @@ export function toProductRow(product: Product) {
   return {
     id: product.id,
     name: product.name,
+    title: product.name,
     category: product.category,
     price: product.price,
     processor,
