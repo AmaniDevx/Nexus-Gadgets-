@@ -51,8 +51,8 @@ export function WhatsAppProductOrder({ product, onClose }: WhatsAppProductOrderP
     onClose()
   }
 
-  return <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4" onMouseDown={event => { if (event.target === event.currentTarget) onClose() }}>
-    <section role="dialog" aria-modal="true" aria-labelledby="whatsapp-order-title" className="max-h-[92vh] w-full max-w-[460px] overflow-y-auto rounded-3xl bg-white p-4 text-[#1D1D1F] shadow-2xl md:p-8">
+  return <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-0 motion-overlay sm:items-center sm:p-4" onMouseDown={event => { if (event.target === event.currentTarget) onClose() }}>
+    <section role="dialog" aria-modal="true" aria-labelledby="whatsapp-order-title" className="motion-panel max-h-[92dvh] w-full max-w-[460px] overflow-y-auto rounded-t-3xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[#1D1D1F] shadow-2xl sm:max-h-[92vh] sm:rounded-3xl md:p-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-[#168A4A]">WhatsApp Business · {WHATSAPP_BUSINESS_DISPLAY}</p>
