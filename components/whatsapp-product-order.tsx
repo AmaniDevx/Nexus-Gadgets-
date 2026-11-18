@@ -2,12 +2,12 @@
 
 import { useState, type FormEvent } from 'react'
 import { ArrowUpRight, X } from 'lucide-react'
+import { getMajorProductSpecs } from '@/lib/products'
 import { buildWhatsAppUrl, WHATSAPP_BUSINESS_DISPLAY } from '@/lib/whatsapp'
 
 type OrderProduct = {
   id: string
   name: string
-  summary: string
   price: number
   specs: Record<string, string>
 }
@@ -27,15 +27,14 @@ export function WhatsAppProductOrder({ product, onClose }: WhatsAppProductOrderP
     if (!chosenLocation) return
 
     const orderNumber = `NX-${Date.now().toString(36).toUpperCase()}`
-    const specs = Object.entries(product.specs).slice(0, 8).map(([label, value]) => `${label}: ${value}`)
+    const specs = getMajorProductSpecs(product.specs).map(([label, value]) => `${label}: ${value}`)
     const message = [
-      `Hello Nexus Gadgets! I would like to order (${orderNumber}):`,
+      `Hello Nexus Gadgets! I'd like to order (${orderNumber}).`,
       `Product: ${product.name}`,
       `Price: KES ${product.price.toLocaleString('en-KE')}`,
-      `Summary: ${product.summary}`,
-      ...(specs.length ? ['Specs:', ...specs] : []),
+      ...specs,
       ...(customerName.trim() ? [`Name: ${customerName.trim()}`] : []),
-      `Delivery location / pickup: ${chosenLocation}`,
+      `Delivery / pickup: ${chosenLocation}`,
     ].join('\n')
 
     window.open(buildWhatsAppUrl(message), '_blank', 'noopener,noreferrer')
@@ -58,7 +57,7 @@ export function WhatsAppProductOrder({ product, onClose }: WhatsAppProductOrderP
         <div>
           <p className="text-sm font-medium text-[#168A4A]">WhatsApp Business · {WHATSAPP_BUSINESS_DISPLAY}</p>
           <h2 id="whatsapp-order-title" className="mt-2 text-2xl font-semibold tracking-tight">Where should we deliver?</h2>
-          <p className="mt-1.5 text-xs leading-5 text-[#6E6E73]">Product, price, specs, and your location go with the message.</p>
+          <p className="mt-1.5 text-xs leading-5 text-[#6E6E73]">Product, price, key specs, and delivery location go with the message.</p>
         </div>
         <button type="button" onClick={onClose} aria-label="Close order form" className="shrink-0 rounded-full bg-[#F5F5F7] p-2 text-[#626267] hover:bg-[#e9e9eb]"><X size={18}/></button>
       </div>
