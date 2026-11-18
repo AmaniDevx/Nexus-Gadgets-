@@ -186,7 +186,7 @@ export default function AdminAnalyticsDashboard() {
   return <main className="min-h-screen bg-[#F5F5F7] px-4 py-6 text-[#1D1D1F] sm:px-6 md:px-8 md:py-8">
     <div className="mx-auto max-w-[1180px]">
       <div className="flex items-center justify-between gap-4">
-        <a href="/" className="text-sm font-medium text-[#0071E3]">← Storefront</a>
+        <a href="/" className="inline-flex min-h-11 items-center text-sm font-medium text-[#0071E3]">← Storefront</a>
         <button type="button" onClick={() => { void fetch('/api/admin/session', { method: 'DELETE' }).catch(() => undefined).finally(() => window.location.replace('/admin')) }} className="rounded-full bg-white px-4 py-2 text-sm font-medium shadow-sm">Sign out</button>
       </div>
 
@@ -264,13 +264,21 @@ export default function AdminAnalyticsDashboard() {
         <Card className="rounded-2xl border-0 shadow-sm">
           <CardHeader><CardTitle className="text-lg">Products sold</CardTitle><CardDescription>Item-level sales record · only orders marked Delivered · {range === 'all' ? 'all time' : range === '7d' ? 'last 7 days' : 'last 30 days'}</CardDescription></CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[680px] text-left text-sm">
                 <thead className="text-xs text-[#86868B]"><tr><th className="pb-3 pr-4 font-medium">Date</th><th className="pb-3 pr-4 font-medium">Order</th><th className="pb-3 pr-4 font-medium">Product</th><th className="pb-3 pr-4 text-right font-medium">Qty</th><th className="pb-3 pr-4 text-right font-medium">Unit price</th><th className="pb-3 text-right font-medium">Line total</th></tr></thead>
                 <tbody className="divide-y divide-black/5">{soldItems.slice(0, 30).map((item, index) => <tr key={`${item.order.id}-${item.productId}-${index}`}><td className="py-3 pr-4 text-[#626267]">{formatDate(item.order.created_at)}</td><td className="py-3 pr-4 font-medium">{item.order.order_number || '—'}</td><td className="py-3 pr-4">{item.name}</td><td className="py-3 pr-4 text-right tabular-nums">{item.quantity}</td><td className="py-3 pr-4 text-right tabular-nums">{money(item.unitPrice)}</td><td className="py-3 text-right font-medium tabular-nums">{money(item.unitPrice * item.quantity)}</td></tr>)}</tbody>
               </table>
               {!soldItems.length && <p className="py-5 text-center text-sm text-[#86868B]">No delivered product sales in this period yet.</p>}
               {soldItems.length > 30 && <p className="pt-3 text-xs text-[#86868B]">Showing the 30 most recent item records. The totals above include all delivered orders in the selected period.</p>}
+            </div>
+            <div className="flex flex-col gap-3 lg:hidden">
+              {soldItems.slice(0, 30).map((item, index) => <article key={`${item.order.id}-${item.productId}-${index}`} className="rounded-xl bg-[#F5F5F7] p-4">
+                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="break-words text-sm font-medium">{item.name}</p><p className="mt-1 text-xs text-[#86868B]">{formatDate(item.order.created_at)} · {item.order.order_number || '—'}</p></div><p className="shrink-0 text-sm font-semibold tabular-nums">{money(item.unitPrice * item.quantity)}</p></div>
+                <div className="mt-3 flex justify-between gap-3 border-t border-black/5 pt-3 text-xs text-[#626267]"><span>Qty {item.quantity}</span><span>Unit {money(item.unitPrice)}</span></div>
+              </article>)}
+              {!soldItems.length && <p className="py-5 text-center text-sm text-[#86868B]">No delivered product sales in this period yet.</p>}
+              {soldItems.length > 30 && <p className="text-xs text-[#86868B]">Showing 30 recent items. Totals above include all delivered orders.</p>}
             </div>
           </CardContent>
         </Card>
@@ -280,7 +288,7 @@ export default function AdminAnalyticsDashboard() {
         <Card className="rounded-2xl border-0 shadow-sm">
           <CardHeader className="flex flex-row items-start justify-between gap-4"><div><CardTitle className="text-lg">Orders</CardTitle><CardDescription>Recent customer orders · refreshes automatically</CardDescription></div><span className="rounded-full bg-[#F5F5F7] px-3 py-1.5 text-xs font-medium text-[#626267]">{rangeOrders.length} total</span></CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[780px] text-left text-sm">
                 <thead className="text-xs text-[#86868B]"><tr><th className="pb-3 pr-4 font-medium">Order</th><th className="pb-3 pr-4 font-medium">Customer</th><th className="pb-3 pr-4 font-medium">Items</th><th className="pb-3 pr-4 text-right font-medium">Total</th><th className="pb-3 text-right font-medium">Status</th></tr></thead>
                 <tbody className="divide-y divide-black/5">{rangeOrders.map(order => <tr key={order.id}>
@@ -291,6 +299,15 @@ export default function AdminAnalyticsDashboard() {
                   <td className="py-3 text-right"><select aria-label={`Status for ${order.order_number || 'order'}`} disabled={savingOrderId === order.id} value={order.status || orderStatuses[0]} onChange={event => void updateStatus(order.id, event.target.value)} className="max-w-[165px] rounded-lg bg-[#F5F5F7] px-2 py-2 text-xs outline-none focus:ring-2 focus:ring-[#0071E3] disabled:opacity-60">{orderStatuses.map(status => <option key={status}>{status}</option>)}</select></td>
                 </tr>)}</tbody>
               </table>
+              {!rangeOrders.length && <p className="py-5 text-center text-sm text-[#86868B]">No orders in this period.</p>}
+            </div>
+            <div className="flex flex-col gap-3 lg:hidden">
+              {rangeOrders.map(order => <article key={order.id} className="rounded-xl bg-[#F5F5F7] p-4">
+                <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="break-words text-sm font-semibold">{order.order_number || '—'}</p><p className="mt-1 text-xs text-[#86868B]">{formatDate(order.created_at)}</p></div><p className="shrink-0 text-sm font-semibold tabular-nums">{money(Number(order.total_kes || 0))}</p></div>
+                <div className="mt-3 border-t border-black/5 pt-3"><p className="text-sm font-medium">{order.customer_name || '—'}</p><p className="mt-0.5 break-words text-xs text-[#86868B]">{order.location || 'No delivery location provided'}</p></div>
+                <p className="mt-3 break-words text-xs leading-5 text-[#626267]">{orderItems(order).map(item => `${item.name || 'Product'} ×${Number(item.quantity) || 0}`).join(' · ') || 'No items listed'}</p>
+                <label className="mt-4 block"><span className="text-xs font-medium text-[#626267]">Order status</span><select aria-label={`Status for ${order.order_number || 'order'}`} disabled={savingOrderId === order.id} value={order.status || orderStatuses[0]} onChange={event => void updateStatus(order.id, event.target.value)} className="mt-1 w-full rounded-xl bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[#0071E3] disabled:opacity-60">{orderStatuses.map(status => <option key={status}>{status}</option>)}</select></label>
+              </article>)}
               {!rangeOrders.length && <p className="py-5 text-center text-sm text-[#86868B]">No orders in this period.</p>}
             </div>
           </CardContent>

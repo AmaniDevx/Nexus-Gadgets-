@@ -200,8 +200,8 @@ export function ProductAdCreator({ products }: ProductAdCreatorProps) {
       <button type="button" onClick={() => setIsOpen(true)} disabled={!products.length} className="inline-flex items-center gap-2 rounded-full bg-[#1D1D1F] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"><Megaphone size={16}/> Create product ad</button>
     </div>
 
-    {isOpen&&<div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" onMouseDown={event => { if (event.target === event.currentTarget) setIsOpen(false) }}>
-      <section role="dialog" aria-modal="true" aria-labelledby="product-ad-title" className="max-h-[94vh] w-full max-w-[1060px] overflow-auto rounded-3xl bg-white p-5 text-[#1D1D1F] shadow-2xl md:p-7">
+    {isOpen&&<div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 p-0 motion-overlay sm:items-center sm:p-4" onMouseDown={event => { if (event.target === event.currentTarget) setIsOpen(false) }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="product-ad-title" className="motion-panel max-h-[94dvh] w-full max-w-[1060px] overflow-auto rounded-t-3xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[#1D1D1F] shadow-2xl sm:max-h-[94vh] sm:rounded-3xl sm:p-5 md:p-7">
         <header className="mb-5 flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-[#0071E3]">Marketing studio · Social portrait</p>
