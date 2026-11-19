@@ -21,7 +21,7 @@ const defaultCategories: StoreCategory[] = [
 const kes=(n:number)=>`KES ${n.toLocaleString('en-KE')}`
 const prepareProductImage=async(file:File):Promise<File>=>{
  if(!file.type.toLowerCase().startsWith('image/'))throw new Error(`${file.name} is not a supported image.`)
- if(file.size>15*1024*1024)throw new Error(`${file.name} is larger than 15 MB.`)
+ if(file.size>100*1024*1024)throw new Error(`${file.name} is larger than 100 MB.`)
  let bitmap:ImageBitmap
  try{bitmap=await createImageBitmap(file)}catch{throw new Error(`${file.name} could not be decoded as an image.`)}
  const scale=Math.min(1,1400/Math.max(bitmap.width,bitmap.height))
